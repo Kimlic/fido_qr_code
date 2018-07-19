@@ -23,7 +23,7 @@ defmodule FidoQrCode do
          :ok <- check_processed(scope_request),
          :ok <- check_expired(scope_request),
          {:ok, processed_scope_request} <- process(scope_request, username),
-         {:ok, fido} <- @fido_server_client.create_request(username) do
+         {:ok, fido} <- create_request(username) do
       {:ok,
        %{
          scope_request: processed_scope_request,
@@ -32,7 +32,18 @@ defmodule FidoQrCode do
     end
   end
 
-  @moduledoc """
+  @spec create_request(binary) :: {:ok, map} | {:error, tuple}
+  defp create_request(username) do
+    {:ok, %HTTPoison.Response{status_code: status_code}} =
+      @fido_server_client.check_username_registered(username)
+
+    case status_code do
+      204 -> @fido_server_client.create_auth_request
+      _ -> @fido_server_client.create_reg_request(username)
+    end
+  end
+
+  @doc """
   Example of rendering QR Code in Phoenix Controller
 
   def qrcode(conn, _params) do

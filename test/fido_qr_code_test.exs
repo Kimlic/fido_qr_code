@@ -6,7 +6,12 @@ defmodule FidoQrCodeTest do
 
   describe "generate qr code and process it" do
     test "happy path" do
-      expect(FidoServerClientMock, :create_request, fn username ->
+      expect(FidoServerClientMock, :check_username_registered, fn username ->
+        assert is_binary(username)
+        {:ok, %HTTPoison.Response{status_code: 404}}
+      end)
+
+      expect(FidoServerClientMock, :create_reg_request, fn username ->
         assert is_binary(username)
         {:ok, %{"challenge" => "some-random-challenge"}}
       end)
@@ -32,6 +37,24 @@ defmodule FidoQrCodeTest do
       # ScopeRequest already processed
       assert {:error, :scope_request_already_processed} =
                FidoQrCode.process_scope_request(scope_request, "test")
+    end
+
+    test "call auth request for registered username" do
+      expect(FidoServerClientMock, :check_username_registered, fn username ->
+        assert is_binary(username)
+        {:ok, %HTTPoison.Response{status_code: 204}}
+      end)
+
+      expect(FidoServerClientMock, :create_auth_request, fn ->
+        {:ok, %{"challenge" => "some-random-challenge"}}
+      end)
+
+      assert {:ok, scope_request = %ScopeRequest{}} = FidoQrCode.create_scope_request()
+
+      assert FidoQrCode.generate_qr_code(scope_request)
+      assert {:ok, resp} = FidoQrCode.process_scope_request(scope_request, "test-username")
+      assert Map.has_key?(resp, :fido)
+      assert Map.has_key?(resp, :scope_request)
     end
   end
 end
