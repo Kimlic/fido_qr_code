@@ -36,7 +36,7 @@ defmodule FidoQrCodeTest do
 
       # ScopeRequest already processed
       assert {:error, :scope_request_already_processed} =
-               FidoQrCode.process_scope_request(scope_request, "test")
+               FidoQrCode.process_scope_request(scope_request.id, "test")
     end
 
     test "call auth request for registered username" do
@@ -50,11 +50,28 @@ defmodule FidoQrCodeTest do
       end)
 
       assert {:ok, scope_request = %ScopeRequest{}} = FidoQrCode.create_scope_request()
-
       assert FidoQrCode.generate_qr_code(scope_request)
       assert {:ok, resp} = FidoQrCode.process_scope_request(scope_request, "test-username")
       assert Map.has_key?(resp, :fido)
       assert Map.has_key?(resp, :scope_request)
+    end
+
+    test "scope request expired" do
+      assert {:ok, scope_request = %ScopeRequest{}} = FidoQrCode.create_scope_request()
+
+      inserted_at =
+        :fido_qr_code
+        |> Confex.fetch_env!(:scope_request_ttl)
+        |> Kernel.+(:os.system_time(:second) + 2)
+        |> DateTime.from_unix!()
+
+      # put expired inserted_at
+      scope_request = Map.put(scope_request, :inserted_at, inserted_at)
+
+      assert FidoQrCode.generate_qr_code(scope_request)
+
+      assert {:error, :scope_request_expired} =
+               FidoQrCode.process_scope_request(scope_request, "test-username")
     end
   end
 end

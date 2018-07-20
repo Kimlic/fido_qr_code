@@ -9,7 +9,7 @@ defmodule FidoQrCode.Repo.Migrations.CreateScopeRequest do
       add(:used, :boolean, default: false)
       add(:username, :string)
 
-      timestamps()
+      timestamps(type: :utc_datetime)
     end
   end
 end

@@ -2,6 +2,8 @@ defmodule FidoQrCode.ScopeRequest do
   use Ecto.Schema
   import Ecto.Changeset
 
+  @derive {Jason.Encoder, except: [:__meta__]}
+
   @status_new "NEW"
   @status_inactive "INACTIVE"
 
@@ -12,7 +14,7 @@ defmodule FidoQrCode.ScopeRequest do
     field(:used, :boolean, default: false)
     field(:username, :string)
 
-    timestamps()
+    timestamps(type: :utc_datetime)
   end
 
   @optional ~w(username used)a
