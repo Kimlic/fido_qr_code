@@ -38,6 +38,7 @@ defmodule FidoQrCode.MixProject do
     [
       {:confex, "~> 3.3.1"},
       {:ecto, "~> 2.2"},
+      {:ecto_logger_json, git: "https://github.com/edenlabllc/ecto_logger_json.git", branch: "query_params"},
       {:httpoison, "~> 1.2"},
       {:jason, "~> 1.1"},
       {:qrcode, "~> 0.1.4"},
